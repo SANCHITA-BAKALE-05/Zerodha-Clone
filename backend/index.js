@@ -197,17 +197,144 @@ app.get("/allPositions", async (req, res) => {
   res.json(allPositions);
 });
 
+app.get("/allOrders", async (req, res) => {
+  const allOrders = await OrdersModel.find({});
+  res.json(allOrders);
+});
+
 app.post("/newOrder", async (req, res) => {
-  let newOrder = new OrdersModel({
-    name: req.body.name,
-    qty: req.body.qty,
-    price: req.body.price,
-    mode: req.body.mode,
-  });
+  try {
+    const name = req.body.name;
+    const qty = Number(req.body.qty);
+    const price = Number(req.body.price);
+    const mode = req.body.mode;
 
-  newOrder.save();
+    const order = new OrdersModel({
+      name,
+      qty,
+      price,
+      mode,
+    });
 
-  res.send("Order saved!");
+    await order.save();
+
+    if (mode === "BUY") {
+      const holding = new HoldingsModel({
+        name,
+        qty,
+        avg: price,
+        price,
+        net: "0%",
+        day: "0%",
+      });
+
+      await holding.save();
+
+      return res.json({
+        success: true,
+        message: "Buy order placed",
+      });
+    }
+
+    const holdings = await HoldingsModel.find({ name });
+
+    if (holdings.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "You don't own this stock.",
+      });
+    }
+
+    const totalQty = holdings.reduce((sum, item) => sum + item.qty, 0);
+
+    if (totalQty < qty) {
+      return res.status(400).json({
+        success: false,
+        message: "Not enough quantity available.",
+      });
+    }
+
+    let remainingQty = qty;
+
+    for (const holding of holdings) {
+      if (remainingQty === 0) break;
+
+      if (holding.qty <= remainingQty) {
+        remainingQty -= holding.qty;
+        await HoldingsModel.deleteOne({ _id: holding._id });
+      } else {
+        holding.qty -= remainingQty;
+        await holding.save();
+        remainingQty = 0;
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Sell order placed",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.get("/allOrders", async (req, res) => {
+  try {
+    const orders = await OrdersModel.find({});
+    res.json(orders);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.put("/updateOrder/:id", async (req, res) => {
+  try {
+    const { qty, price } = req.body;
+
+    await OrdersModel.findByIdAndUpdate(req.params.id, {
+      qty,
+      price,
+    });
+
+    res.json({
+      success: true,
+      message: "Order updated successfully.",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.delete("/deleteOrder/:id", async (req, res) => {
+  try {
+    await OrdersModel.findByIdAndDelete(req.params.id);
+
+    res.json({
+      success: true,
+      message: "Order deleted successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
 });
 
 app.listen(PORT, async() => {

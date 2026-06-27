@@ -7,39 +7,40 @@ import GeneralContext from "./GeneralContext";
 
 import "./BuyActionWindow.css";
 
-const BuyActionWindow = ({ uid }) => {
+const SellActionWindow = ({ uid }) => {
   const [stockQuantity, setStockQuantity] = useState(1);
   const [stockPrice, setStockPrice] = useState(0.0);
   const generalContext= useContext(GeneralContext);
 
-  const handleBuyClick = () => {
-    axios
-      .post("http://localhost:3002/newOrder", {
+  const handleSellClick = () => {
+      axios
+        .post("http://localhost:3002/newOrder", {
         name: uid,
         qty: stockQuantity,
         price: stockPrice,
-        mode: "BUY",
-      })
-      .then((res) => {
+        mode: "SELL",
+        })
+        .then((res) => {
         alert(res.data.message);
-        generalContext.closeBuyWindow();
+        generalContext.closeSellWindow();
         window.location.reload();
-      })
-      .catch((err) => {
+        })
+        .catch((err) => {
         if (err.response) {
-          alert(err.response.data.message);
+            alert(err.response.data.message);
         } else {
-          alert("Something went wrong.");
+            console.log(err);
+            alert("Something went wrong.");
         }
-      });
-  };
+        });
+    };
 
   const handleCancelClick = () => {
-    generalContext.closeBuyWindow();
+    generalContext.closeSellWindow();
   };
 
   return (
-    <div className="container" id="buy-window" draggable="true">
+    <div className="container" id="sell-window" draggable="true">
       <div className="regular-order">
         <div className="inputs">
           <fieldset>
@@ -69,8 +70,8 @@ const BuyActionWindow = ({ uid }) => {
       <div className="buttons">
         <span>Margin required ₹140.65</span>
         <div>
-          <Link className="btn btn-blue" onClick={handleBuyClick}>
-            Buy
+          <Link className="btn btn-blue" onClick={handleSellClick}>
+            Sell
           </Link>
           <Link to="" className="btn btn-grey" onClick={handleCancelClick}>
             Cancel
@@ -81,4 +82,4 @@ const BuyActionWindow = ({ uid }) => {
   );
 };
 
-export default BuyActionWindow;
+export default SellActionWindow;

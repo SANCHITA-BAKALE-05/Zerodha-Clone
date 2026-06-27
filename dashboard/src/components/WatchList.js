@@ -1,7 +1,5 @@
 import React, { useState, useContext } from "react";
 
-import axios from "axios";
-
 import GeneralContext from "./GeneralContext";
 
 import { Tooltip, Grow } from "@mui/material";
@@ -19,6 +17,7 @@ import { DoughnutChart } from "./DoughnoutChart";
 const labels = watchlist.map((subArray) => subArray["name"]);
 
 const WatchList = () => {
+  const[search, setSearch]= useState("");
   const data = {
     labels,
     datasets: [
@@ -82,14 +81,26 @@ const WatchList = () => {
           id="search"
           placeholder="Search eg:infy, bse, nifty fut weekly, gold mcx"
           className="search"
+          value={search}
+          onChange={(e)=> setSearch(e.target.value)}
         />
-        <span className="counts"> {watchlist.length} / 50</span>
+        <span className="counts">
+          {
+            watchlist.filter((stock) =>
+              stock.name.toLowerCase().includes(search.toLowerCase())
+            ).length
+          } / 50
+        </span>
       </div>
 
       <ul className="list">
-        {watchlist.map((stock, index) => {
-          return <WatchListItem stock={stock} key={index} />;
-        })}
+        {watchlist
+          .filter((stock) =>
+            stock.name.toLowerCase().includes(search.toLowerCase())
+          )
+          .map((stock, index) => {
+            return <WatchListItem stock={stock} key={index} />;
+          })}
       </ul>
 
       <DoughnutChart data={data} />
@@ -136,6 +147,10 @@ const WatchListActions = ({ uid }) => {
     generalContext.openBuyWindow(uid);
   };
 
+  const handleSellClick = () => {
+    generalContext.openSellWindow(uid);
+  };
+
   return (
     <span className="actions">
       <span>
@@ -153,6 +168,7 @@ const WatchListActions = ({ uid }) => {
           placement="top"
           arrow
           TransitionComponent={Grow}
+          onClick={handleSellClick}
         >
           <button className="sell">Sell</button>
         </Tooltip>
