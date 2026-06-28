@@ -15,7 +15,9 @@ const Orders = () => {
 
   const fetchOrders = () => {
     axios
-      .get("http://localhost:3002/allOrders")
+      .get("http://localhost:3002/allOrders", {
+        withCredentials: true,
+      })
       .then((res) => setOrders(res.data))
       .catch((err) => console.log(err));
   };
@@ -54,20 +56,21 @@ const Orders = () => {
                   </button>
 
                   <button
-    onClick={() => {
-      axios
-        .delete(
-          `http://localhost:3002/deleteOrder/${order._id}`
-        )
-        .then((res) => {
-          alert(res.data.message);
+                    onClick={() => {
+                      axios
+                        .delete(
+                          `http://localhost:3002/deleteOrder/${order._id}`, {
+                            withCredentials: true,
+                        })
+                        .then((res) => {
+                          alert(res.data.message);
 
-          fetchOrders();
-        });
-    }}
-  >
-    Delete
-  </button>
+                          fetchOrders();
+                        });
+                    }}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -100,6 +103,9 @@ const Orders = () => {
                   {
                     qty: newQty,
                     price: newPrice,
+                  }, 
+                  {
+                    withCredentials: true,
                   }
                 )
                 .then(() => {

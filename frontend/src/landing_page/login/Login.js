@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-function Signup() {
+function Login() {
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     password: "",
   });
@@ -16,29 +15,32 @@ function Signup() {
   };
 
   const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
-            const response = await axios.post(
-            "http://localhost:3002/signup",
-            formData
-            );
-
-            alert(response.data.message);
-
-            setFormData({
-            username: "",
-            email: "",
-            password: "",
-            });
-
-        } catch (err) {
-            console.log(err);
-            console.log(err.response);
-
-            alert(err.response?.data?.message || err.message);
+    try {
+      const response = await axios.post(
+        "http://localhost:3002/login",
+        formData,
+        {
+          withCredentials: true,
         }
-    };
+      );
+
+      alert(response.data.message);
+
+      console.log(response.data);
+
+      setFormData({
+        email: "",
+        password: "",
+      });
+
+      window.location.href = "http://localhost:3000";
+
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
+  };
 
   return (
     <div
@@ -47,25 +49,20 @@ function Signup() {
         margin: "60px auto",
       }}
     >
-      <h2>Create Account</h2>
+      <h2>Login</h2>
 
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
-        />
-
         <input
           type="email"
           name="email"
           placeholder="Email"
           value={formData.email}
           onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+          }}
         />
 
         <input
@@ -74,7 +71,11 @@ function Signup() {
           placeholder="Password"
           value={formData.password}
           onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "15px",
+          }}
         />
 
         <button
@@ -84,11 +85,11 @@ function Signup() {
             padding: "10px",
           }}
         >
-          Sign Up
+          Login
         </button>
       </form>
     </div>
   );
 }
 
-export default Signup;
+export default Login;

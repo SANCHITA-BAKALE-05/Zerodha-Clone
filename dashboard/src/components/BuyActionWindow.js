@@ -19,6 +19,8 @@ const BuyActionWindow = ({ uid }) => {
         qty: stockQuantity,
         price: stockPrice,
         mode: "BUY",
+      }, {
+        withCredentials: true,
       })
       .then((res) => {
         alert(res.data.message);

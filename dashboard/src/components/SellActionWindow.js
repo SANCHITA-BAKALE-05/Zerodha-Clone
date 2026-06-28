@@ -19,7 +19,9 @@ const SellActionWindow = ({ uid }) => {
         qty: stockQuantity,
         price: stockPrice,
         mode: "SELL",
-        })
+        }, {
+        withCredentials: true,
+      })
         .then((res) => {
         alert(res.data.message);
         generalContext.closeSellWindow();

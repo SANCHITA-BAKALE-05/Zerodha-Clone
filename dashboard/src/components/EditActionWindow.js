@@ -17,7 +17,10 @@ const EditActionWindow = ({ order }) => {
       .put(`http://localhost:3002/updateOrder/${order._id}`, {
         qty,
         price,
-      })
+      }, {
+        withCredentials: true,
+      }
+      )
 
       .then(() => {
         alert("Order Updated");

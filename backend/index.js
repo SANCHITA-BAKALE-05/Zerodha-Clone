@@ -4,19 +4,32 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const { HoldingsModel } = require("./model/HoldingsModel");
 
 const { PositionsModel } = require("./model/PositionsModel");
 const { OrdersModel } = require("./model/OrdersModel");
 
+const { UserModel } = require("./model/UserModel");
+const auth = require("./middleware/auth");
+
+
 const PORT = process.env.PORT || 3002;
 const uri = process.env.MONGO_URL;
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3001",
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 // app.get("/addHoldings", async (req, res) => {
 //   let tempHoldings = [
@@ -187,22 +200,17 @@ app.use(bodyParser.json());
 //   res.send("Done!");
 // });
 
-app.get("/allHoldings", async (req, res) => {
+app.get("/allHoldings", auth, async (req, res) => {
   let allHoldings = await HoldingsModel.find({});
   res.json(allHoldings);
 });
 
-app.get("/allPositions", async (req, res) => {
+app.get("/allPositions",auth,  async (req, res) => {
   let allPositions = await PositionsModel.find({});
   res.json(allPositions);
 });
 
-app.get("/allOrders", async (req, res) => {
-  const allOrders = await OrdersModel.find({});
-  res.json(allOrders);
-});
-
-app.post("/newOrder", async (req, res) => {
+app.post("/newOrder", auth,  async (req, res) => {
   try {
     const name = req.body.name;
     const qty = Number(req.body.qty);
@@ -283,7 +291,7 @@ app.post("/newOrder", async (req, res) => {
   }
 });
 
-app.get("/allOrders", async (req, res) => {
+app.get("/allOrders", auth, async (req, res) => {
   try {
     const orders = await OrdersModel.find({});
     res.json(orders);
@@ -296,14 +304,38 @@ app.get("/allOrders", async (req, res) => {
   }
 });
 
-app.put("/updateOrder/:id", async (req, res) => {
+app.put("/updateOrder/:id", auth, async (req, res) => {
   try {
     const { qty, price } = req.body;
+
+    const oldOrder = await OrdersModel.findById(req.params.id);
+
+    if (!oldOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
 
     await OrdersModel.findByIdAndUpdate(req.params.id, {
       qty,
       price,
     });
+
+    if (oldOrder.mode === "BUY") {
+      await HoldingsModel.findOneAndUpdate(
+        {
+          name: oldOrder.name,
+          avg: oldOrder.price,
+          qty: oldOrder.qty,
+        },
+        {
+          qty,
+          avg: price,
+          price,
+        }
+      );
+    }
 
     res.json({
       success: true,
@@ -319,14 +351,169 @@ app.put("/updateOrder/:id", async (req, res) => {
   }
 });
 
-app.delete("/deleteOrder/:id", async (req, res) => {
+app.delete("/deleteOrder/:id", auth, async (req, res) => {
   try {
+    const order = await OrdersModel.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (order.mode === "BUY") {
+      await HoldingsModel.findOneAndDelete({
+        name: order.name,
+        qty: order.qty,
+        avg: order.price,
+      });
+    }
+
     await OrdersModel.findByIdAndDelete(req.params.id);
 
     res.json({
       success: true,
       message: "Order deleted successfully",
     });
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.post("/signup", async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    // Check if all fields are provided
+    if (!username || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all fields",
+      });
+    }
+
+    // Check if email already exists
+    const existingUserModel = await UserModel.findOne({ email });
+
+    if (existingUserModel) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const newUserModel = new UserModel({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    await newUserModel.save();
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if all fields are provided
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all fields",
+      });
+    }
+
+    // Find user by email
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // Send token in cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+      sameSite:"lax",
+      path:"/",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      username: user.username,
+    });
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
+app.get("/verify", auth, async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+
   } catch (err) {
     console.log(err);
 
