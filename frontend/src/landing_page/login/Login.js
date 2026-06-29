@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
 
 function Login() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -28,66 +31,60 @@ function Login() {
 
       alert(response.data.message);
 
-      console.log(response.data);
-
       setFormData({
         email: "",
         password: "",
       });
 
-      window.location.href = "http://localhost:3000/";
-
+      window.location.href = "http://localhost:3001/";
     } catch (err) {
       alert(err.response?.data?.message || err.message);
     }
   };
 
   return (
-    <div
-      style={{
-        width: "400px",
-        margin: "60px auto",
-      }}
-    >
-      <h2>Login</h2>
+    <div className="container py-5">
+      <div
+        className="card shadow mx-auto p-4"
+        style={{ maxWidth: "420px", borderRadius: "18px" }}
+      >
+        <h2 className="text-center mb-2">Log In</h2>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-          }}
-        />
+        <p className="text-center text-muted mb-4">
+          Welcome back!
+        </p>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-          }}
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            className="form-control mb-3"
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px",
-          }}
-        >
-          Login
-        </button>
-      </form>
+          <input
+            className="form-control mb-4"
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <button className="btn btn-primary w-100">
+            Log In
+          </button>
+        </form>
+
+        <p className="text-center mt-4 mb-0">
+          Don't have an account?{" "}
+          <Link to="/signup">Create Account</Link>
+        </p>
+      </div>
     </div>
   );
 }

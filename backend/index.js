@@ -524,6 +524,19 @@ app.get("/verify", auth, async (req, res) => {
   }
 });
 
+app.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+});
+
 app.listen(PORT, async() => {
   console.log("App started!");
   try {

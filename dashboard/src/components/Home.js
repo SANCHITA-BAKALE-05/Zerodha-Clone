@@ -6,6 +6,7 @@ import TopBar from "./TopBar";
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
   const verifyUser = async () => {
@@ -18,7 +19,7 @@ const Home = () => {
       );
 
       console.log(res.data);
-
+      setUser(res.data.user);
       setLoading(false);
     } catch (err) {
       console.log(err);
@@ -35,7 +36,7 @@ const Home = () => {
 
   return (
     <>
-      <TopBar />
+      <TopBar user={user} />
       <Dashboard />
     </>
   );

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
 
 function Signup() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -16,77 +19,81 @@ function Signup() {
   };
 
   const handleSubmit = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        try {
-            const response = await axios.post(
-            "http://localhost:3002/signup",
-            formData
-            );
+    try {
+      const response = await axios.post(
+        "http://localhost:3002/signup",
+        formData
+      );
 
-            alert(response.data.message);
+      alert(response.data.message);
 
-            setFormData({
-            username: "",
-            email: "",
-            password: "",
-            });
+      setFormData({
+        username: "",
+        email: "",
+        password: "",
+      });
 
-        } catch (err) {
-            console.log(err);
-            console.log(err.response);
-
-            alert(err.response?.data?.message || err.message);
-        }
-    };
+      navigate("/login");
+    } catch (err) {
+      alert(err.response?.data?.message || err.message);
+    }
+  };
 
   return (
-    <div
-      style={{
-        width: "400px",
-        margin: "60px auto",
-      }}
-    >
-      <h2>Create Account</h2>
+    <div className="container py-5">
+      <div
+        className="card shadow mx-auto p-4"
+        style={{ maxWidth: "420px", borderRadius: "18px" }}
+      >
+        <h2 className="text-center mb-2">Create Account</h2>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
-        />
+        <p className="text-center text-muted mb-4">
+          Open your Zerodha account
+        </p>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            className="form-control mb-3"
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          style={{ width: "100%", padding: "10px", marginBottom: "15px" }}
-        />
+          <input
+            className="form-control mb-3"
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
 
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px",
-          }}
-        >
-          Sign Up
-        </button>
-      </form>
+          <input
+            className="form-control mb-4"
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+
+          <button className="btn btn-primary w-100">
+            Create Account
+          </button>
+        </form>
+
+        <p className="text-center mt-4 mb-0">
+          Already have an account?{" "}
+          <Link to="/login">Log in</Link>
+        </p>
+      </div>
     </div>
   );
 }
