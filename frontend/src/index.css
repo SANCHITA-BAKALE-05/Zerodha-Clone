@@ -16,6 +16,13 @@ code {
   margin-left: 40px;
 }
 
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: white;
+}
+
 #supportHero{
   background-color: rgb(56, 126, 209);
   color: white;
