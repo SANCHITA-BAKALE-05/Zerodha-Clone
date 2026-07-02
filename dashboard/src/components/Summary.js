@@ -6,7 +6,9 @@ const Summary = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3002/allHoldings")
+      .get("http://localhost:3002/allHoldings", {
+        withCredentials: true,
+      })
       .then((res) => {
         setHoldings(res.data);
       })
